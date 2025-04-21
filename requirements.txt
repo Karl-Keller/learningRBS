@@ -1,0 +1,11 @@
+# Core requirements
+numpy>=1.20.0
+
+# Optional visualization requirements
+matplotlib>=3.4.0
+networkx>=2.6.0
+pillow>=8.0.0
+
+# Documentation
+pytest>=6.0.0
+sphinx>=4.0.0
