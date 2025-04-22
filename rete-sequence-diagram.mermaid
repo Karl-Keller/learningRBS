@@ -1,0 +1,83 @@
+sequenceDiagram
+    participant Client
+    participant Engine as InferenceEngine
+    participant Network as ReteNetwork
+    participant Alpha as AlphaMemory
+    participant JoinNode
+    participant Beta as BetaMemory
+    participant ProdNode as ProductionNode
+    participant Strategy as ConflictResolutionStrategy
+    
+    %% Adding a rule
+    Client->>Engine: add_production(name, conditions, actions)
+    activate Engine
+    Engine->>Network: add_production(production)
+    activate Network
+    
+    Note over Network: For each condition
+    Network->>Network: build_or_share_alpha_memory(condition)
+    Network->>Network: build_or_share_beta_memory(parent, alpha, condition)
+    Network->>JoinNode: create JoinNode
+    JoinNode->>Beta: create BetaMemory
+    
+    Network->>ProdNode: create ProductionNode
+    Network-->>Engine: return ProductionNode
+    deactivate Network
+    Engine-->>Client: return Production
+    deactivate Engine
+    
+    %% Adding a WME
+    Client->>Engine: add_wme(identifier, attribute, value)
+    activate Engine
+    Engine->>Engine: create WME
+    Engine->>Network: add_wme(wme)
+    activate Network
+    Network->>Network: _activate_alpha_memories(root, wme)
+    Network->>Alpha: activate_with(wme)
+    activate Alpha
+    Alpha->>JoinNode: right_activation(wme)
+    activate JoinNode
+    
+    alt Root join node
+        JoinNode->>Beta: left_activation(token, wme)
+    else Non-root join node
+        JoinNode->>JoinNode: perform_join_tests(token, wme)
+        JoinNode->>Beta: left_activation(token, wme)
+    end
+    
+    deactivate JoinNode
+    deactivate Alpha
+    
+    Beta->>ProdNode: left_activation(token, wme)
+    activate ProdNode
+    ProdNode->>ProdNode: add token to items
+    deactivate ProdNode
+    
+    Network-->>Engine: return
+    deactivate Network
+    Engine-->>Client: return WME
+    deactivate Engine
+    
+    %% Running the engine cycle
+    Client->>Engine: run(max_cycles)
+    activate Engine
+    
+    Engine->>Engine: _build_conflict_set()
+    
+    loop Until agenda empty or max_cycles reached
+        Engine->>Strategy: select(agenda)
+        activate Strategy
+        Strategy-->>Engine: (production, token)
+        deactivate Strategy
+        
+        Engine->>Engine: production.execute(token, engine)
+        activate Engine
+        Engine->>Engine: _get_variable_bindings(token)
+        Engine->>Engine: action(bindings, engine)
+        deactivate Engine
+        
+        Engine->>Engine: _build_conflict_set()
+    end
+    
+    Engine-->>Client: return cycles_executed
+    deactivate Engine

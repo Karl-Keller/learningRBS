@@ -1,0 +1,61 @@
+flowchart TD
+    Start([Start]) --> InitEngine[Initialize InferenceEngine]
+    InitEngine --> AddRules[Add Productions/Rules]
+    AddRules --> BuildNetwork[Build Rete Network]
+    
+    subgraph BuildNetworkProcess["Building Rete Network"]
+        B1[Create alpha memories for conditions] --> B2[Create join nodes]
+        B2 --> B3[Create beta memories]
+        B3 --> B4[Link network nodes]
+        B4 --> B5[Create production nodes]
+    end
+    
+    BuildNetwork --> AddFacts[Add WMEs/Facts]
+    
+    subgraph AddFactProcess["Adding Facts Process"]
+        A1[Create WME] --> A2[Add to working memory]
+        A2 --> A3[Activate matching alpha memories]
+        A3 --> A4[Propagate through join nodes]
+        A4 --> A5[Update beta memories]
+        A5 --> A6[Activate production nodes]
+    end
+    
+    AddFacts --> StartEngine[Start Engine Execution]
+    
+    subgraph RecognizeActCycle["Recognize-Act Cycle"]
+        R1[Build conflict set] --> R2{Agenda empty?}
+        R2 -->|Yes| EndCycle[End execution]
+        R2 -->|No| R3[Select rule using conflict resolution]
+        R3 --> R4[Extract variable bindings]
+        R4 --> R5[Execute rule actions]
+        R5 --> R6[Provide feedback to strategy]
+        R6 --> R1
+    end
+    
+    StartEngine --> RecognizeActCycle
+    
+    subgraph ConflictResolutionProcess["Conflict Resolution"]
+        C1[Sort agenda items] --> C2[Get item with highest priority]
+        
+        subgraph StrategiesSubgraph["Available Strategies"]
+            S1[Default: Most complete match]
+            S2[LEX: Most recent WMEs]
+            S3[GBB: Probabilistic with learning]
+            S4[MEA: Goal-directed selection]
+        end
+        
+        C2 --> C3[Return selected production and token]
+    end
+    
+    R3 -.-> ConflictResolutionProcess
+    
+    EndCycle --> End([End])
+    
+    %% Styling
+    classDef process fill:#f9f9f9,stroke:#333,stroke-width:1px;
+    classDef decision fill:#ececff,stroke:#333,stroke-width:1px;
+    classDef subgraphStyle fill:#f0f0f0,stroke:#999,stroke-width:1px;
+    
+    class BuildNetworkProcess,AddFactProcess,RecognizeActCycle,ConflictResolutionProcess subgraphStyle
+    class R2 decision
+    class B1,B2,B3,B4,B5,A1,A2,A3,A4,A5,A6,R1,R3,R4,R5,R6,C1,C2,C3,S1,S2,S3,S4 process

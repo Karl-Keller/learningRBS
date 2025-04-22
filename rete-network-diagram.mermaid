@@ -1,0 +1,74 @@
+graph TD
+    subgraph AlphaNetwork["Alpha Network"]
+        AR[Alpha Root] --> AN1[Alpha Node: attribute=name]
+        AR --> AN2[Alpha Node: attribute=age]
+        AR --> AN3[Alpha Node: identifier=legal]
+        AN3 --> AN4[Alpha Node: attribute=min-age]
+        
+        AN1 --> AM1[Alpha Memory]
+        AN2 --> AM2[Alpha Memory]
+        AN4 --> AM3[Alpha Memory]
+    end
+    
+    subgraph BetaNetwork["Beta Network"]
+        BR[Beta Root Memory] --> J1[Join Node 1]
+        J1 --> BM1[Beta Memory 1]
+        BM1 --> J2[Join Node 2]
+        J2 --> BM2[Beta Memory 2]
+        BM2 --> J3[Join Node 3]
+        J3 --> BM3[Beta Memory 3]
+        BM3 --> P1[Production Node: example-rule]
+    end
+    
+    subgraph WorkingMemory["Working Memory"]
+        WME1[WME: person1-name-Alice]
+        WME2[WME: person1-age-25]
+        WME3[WME: legal-min-age-18]
+    end
+    
+    AM1 -.-> J1
+    AM2 -.-> J2
+    AM3 -.-> J3
+    
+    WME1 -.-> AM1
+    WME2 -.-> AM2
+    WME3 -.-> AM3
+    
+    subgraph Tokens["Token Flow"]
+        T1[Token: WME1]
+        T2[Token: WME1+WME2]
+        T3[Token: WME1+WME2+WME3]
+    end
+    
+    T1 -.-> BM1
+    T2 -.-> BM2
+    T3 -.-> BM3
+    T3 -.-> P1
+    
+    subgraph ConflictResolution["Conflict Resolution"]
+        CS[Conflict Set / Agenda]
+        CRS[Strategy]
+        
+        CS --> CRS
+        CRS --> Selected[Selected Production + Token]
+    end
+    
+    P1 -.-> CS
+    
+    classDef alphaNode fill:#d1f0ff,stroke:#333,stroke-width:1px;
+    classDef alphaMemory fill:#b3e6ff,stroke:#333,stroke-width:1px;
+    classDef betaNode fill:#ffd1dc,stroke:#333,stroke-width:1px;
+    classDef betaMemory fill:#ffb3c6,stroke:#333,stroke-width:1px;
+    classDef workingMemory fill:#d1ffd1,stroke:#333,stroke-width:1px;
+    classDef token fill:#ffffd1,stroke:#333,stroke-width:1px;
+    classDef production fill:#d1d1ff,stroke:#333,stroke-width:1px;
+    classDef conflictSet fill:#ffd1ff,stroke:#333,stroke-width:1px;
+    
+    class AR,AN1,AN2,AN3,AN4 alphaNode
+    class AM1,AM2,AM3 alphaMemory
+    class J1,J2,J3 betaNode
+    class BR,BM1,BM2,BM3 betaMemory
+    class WME1,WME2,WME3 workingMemory
+    class T1,T2,T3 token
+    class P1 production
+    class CS,CRS,Selected conflictSet

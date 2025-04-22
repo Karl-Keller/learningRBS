@@ -1,0 +1,153 @@
+classDiagram
+    class WME {
+      +String identifier
+      +String attribute
+      +Value value
+      +List~Token~ tokens
+      +List~AlphaMemory~ alpha_memories
+      +__eq__(other) bool
+      +__hash__() int
+      +__repr__() String
+    }
+    
+    class AlphaMemory {
+      +List~WME~ items
+      +List~JoinNode~ successors
+      +activate_with(wme) void
+    }
+    
+    class Token {
+      +Token parent
+      +WME wme
+      +List~Token~ children
+      +List join_results
+      +__eq__(other) bool
+      +get_wmes() List~WME~
+      +__repr__() String
+    }
+    
+    class JoinNode {
+      +BetaMemory|null parent
+      +AlphaMemory alpha_memory
+      +List~function~ tests
+      +List children
+      +BetaMemory beta_memory
+      +right_activation(wme) void
+      +left_activation(token, wme) void
+      +perform_join_tests(token, wme) bool
+    }
+    
+    class BetaMemory {
+      +List~Token~ items
+      +JoinNode parent
+      +List children
+      +left_activation(token, wme) void
+    }
+    
+    class ProductionNode {
+      +BetaMemory parent
+      +Production production
+      +List~Token~ items
+      +left_activation(token, wme) void
+    }
+    
+    class Condition {
+      +String identifier
+      +String attribute
+      +Value value
+      +__repr__() String
+    }
+    
+    class Production {
+      +String name
+      +List~Condition~ conditions
+      +List~function~ actions
+      +List matches
+      +execute(token, engine) void
+      -_get_variable_bindings(token) Dict
+    }
+    
+    class ReteNetwork {
+      +Dict alpha_root
+      +BetaMemory beta_root
+      +List~ProductionNode~ productions
+      +add_production(production) ProductionNode
+      +build_or_share_network_for_conditions(conditions) BetaMemory
+      +build_or_share_alpha_memory(condition) AlphaMemory
+      +build_or_share_beta_memory(parent, alpha_memory, condition, earlier_conditions) BetaMemory
+      -_get_alpha_tests(condition) List
+      -_get_join_tests(parent, alpha_memory, condition, earlier_conditions) List
+      -_make_test(condition_number, field_of_earlier_wme, field_of_this_wme) function
+      +add_wme(wme) void
+      -_activate_alpha_memories(node, wme) void
+      +dump_network_state() void
+      -_get_all_alpha_memories() List
+      -_collect_alpha_memories(node, memories) void
+      -_dump_beta_node(node, level) void
+    }
+    
+    class InferenceEngine {
+      +List~WME~ working_memory
+      +ReteNetwork network
+      +List agenda
+      +ConflictResolutionStrategy strategy
+      +set_conflict_resolution_strategy(strategy) void
+      -_select_production() Tuple
+      +provide_feedback(fired_rule, success_factor) void
+      +add_production(name, conditions, actions) Production
+      +add_wme(identifier, attribute, value) WME
+      +remove_wme(wme) void
+      -_remove_token(token) void
+      +run(max_cycles) int
+      -_build_conflict_set() void
+      +dump_state() void
+    }
+    
+    class ConflictResolutionStrategy {
+      <<abstract>>
+      +select(agenda) Tuple
+      +provide_feedback(fired_rule, success_factor) void
+    }
+    
+    class DefaultStrategy {
+      +select(agenda) Tuple
+    }
+    
+    class LEXStrategy {
+      +select(agenda) Tuple
+    }
+    
+    class GamblersBucketBrigade {
+      +Dict rule_weights
+      +float learning_rate
+      +float initial_weight
+      +Production last_fired_rule
+      +select(agenda) Tuple
+      +provide_feedback(fired_rule, success_factor) void
+      +get_rule_weights() Dict
+      +set_rule_weights(weights) void
+    }
+    
+    class MEAStrategy {
+      +select(agenda) Tuple
+    }
+    
+    %% Relationships
+    WME --o AlphaMemory : stored in >
+    AlphaMemory --o JoinNode : notifies >
+    JoinNode --> BetaMemory : creates tokens in >
+    Token --o BetaMemory : stored in >
+    Token --> Token : parent/child >
+    Token --o WME : references >
+    BetaMemory --o ProductionNode : activates >
+    Production --> Condition : contains >
+    ProductionNode --> Production : references >
+    ReteNetwork --> AlphaMemory : creates/manages >
+    ReteNetwork --> BetaMemory : creates/manages >
+    ReteNetwork --o ProductionNode : contains >
+    InferenceEngine --> ReteNetwork : uses >
+    InferenceEngine --> ConflictResolutionStrategy : uses >
+    ConflictResolutionStrategy <|-- DefaultStrategy : extends
+    ConflictResolutionStrategy <|-- LEXStrategy : extends
+    ConflictResolutionStrategy <|-- GamblersBucketBrigade : extends
+    ConflictResolutionStrategy <|-- MEAStrategy : extends

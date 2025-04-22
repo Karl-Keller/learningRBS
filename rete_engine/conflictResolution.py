@@ -33,20 +33,26 @@ class ConflictResolutionStrategy:
 
 
 class DefaultStrategy(ConflictResolutionStrategy):
-    """Default strategy - selects the first production in the agenda"""
+    """Default strategy - selects the most complete match"""
     
     def select(self, agenda):
-        """Select the first rule in the agenda
+        """Select the most complete token from the agenda
         
         Args:
             agenda: List of (production, token) pairs
             
         Returns:
-            First (production, token) pair, or None if agenda is empty
+            (production, token) pair with most WMEs, or None if agenda is empty
         """
-        if agenda:
-            return agenda[0]
-        return None
+        if not agenda:
+            return None
+        
+        # Sort by number of WMEs in the token (most complete match first)
+        def token_completeness(item):
+            _, token = item
+            return len(token.get_wmes())
+        
+        return sorted(agenda, key=token_completeness, reverse=True)[0]
 
 
 class LEXStrategy(ConflictResolutionStrategy):
